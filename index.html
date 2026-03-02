@@ -179,8 +179,8 @@
         // 1. SECURITY HUB LANDING PAGE
         const SecurityHub = ({ onStartTest }) => (
             <div className="min-h-screen p-8 md:p-16 bg-white text-slate-900 animate-fade-in">
-                <header className="flex items-center gap-4 mb-12 pb-5 border-b-4 border-slate-900">
-                    <div className="w-14 h-14 bg-blue-600 rounded-lg flex items-center justify-center text-white text-2xl nb-border shrink-0">
+                <header className="flex items-center gap-4 mb-12 pb-5">
+                    <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center text-white text-2xl shrink-0">
                         <i className="fa-solid fa-compass"></i>
                     </div>
                     <div>
@@ -189,8 +189,8 @@
                 </header>
 
                 <main className="max-w-7xl mx-auto">
-                    <section className="text-center mb-16 max-w-3xl mx-auto border-4 border-slate-900 p-6 md:p-8 bg-slate-50 rounded-xl">
-                        <h2 className="text-4xl md:text-5xl font-extrabold mb-4 tracking-tight text-slate-950 leading-tight">Your Digital Navigator is here to help.</h2>
+                    <section className="text-center mb-16 max-w-3xl mx-auto p-6 md:p-8 bg-slate-50 rounded-xl">
+                        <h2 className="text-2xl md:text-3xl font-extrabold mb-4 tracking-tight text-slate-950 leading-tight">Your Digital Navigator is here to help.</h2>
                         <p className="text-lg md:text-xl text-slate-800 leading-relaxed font-medium">Whether you're looking to brush up on your skills or have a specific concern, choose your path below.</p>
                     </section>
 
@@ -198,7 +198,7 @@
                         {/* Ask a Question Card */}
                         <a href="https://gemini.google.com/gem/1F5sWHY6-1H1lGT3FxpiGTbKurmODlZNq?usp=sharing" target="_blank" rel="noopener noreferrer" className="group block bg-white nb-border p-10 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 hover:border-blue-600 hover:-translate-y-1">
                             <div className="flex items-start gap-8">
-                                <div className="w-24 h-24 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-5xl group-hover:bg-blue-200 transition-colors nb-border">
+                                <div className="w-24 h-24 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-5xl group-hover:bg-blue-200 transition-colors">
                                     <i className="fa-solid fa-comments"></i>
                                 </div>
                                 <div className="flex-1">
@@ -212,7 +212,7 @@
                         {/* Try Challenge Card */}
                         <button onClick={onStartTest} className="group block w-full text-left bg-white nb-border p-10 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 hover:border-emerald-600 hover:-translate-y-1">
                             <div className="flex items-start gap-8">
-                                <div className="w-24 h-24 bg-emerald-100 text-emerald-500 rounded-full flex items-center justify-center text-5xl group-hover:bg-emerald-200 transition-colors nb-border">
+                                <div className="w-24 h-24 bg-emerald-100 text-emerald-500 rounded-full flex items-center justify-center text-5xl group-hover:bg-emerald-200 transition-colors">
                                     <i className="fa-solid fa-graduation-cap"></i>
                                 </div>
                                 <div className="flex-1">
@@ -322,11 +322,9 @@
                                 <button onClick={() => setShowWelcomeModal(false)} className="absolute top-6 right-6 text-slate-500 hover:text-slate-800 nb-shadow-active">
                                     <i className="fa-solid fa-xmark text-2xl"></i>
                                 </button>
-                                <div className="flex gap-4 items-center mb-7 pb-4 border-b-4 border-slate-900">
-                                    <div className="w-14 h-14 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center text-2xl nb-border shrink-0"><i className="fa-solid fa-compass"></i></div>
+                                <div className="flex gap-4 items-center mb-7 pb-4">
                                     <div>
                                         <h3 className="text-3xl md:text-4xl font-extrabold tracking-tight leading-tight">Welcome to the Inbox Navigator Challenge!</h3>
-                                        <p className="text-lg text-slate-700 font-semibold">From your Digital Navigator</p>
                                     </div>
                                 </div>
                                 <p className="text-xl text-slate-900 leading-relaxed mb-8 font-medium">
@@ -407,8 +405,8 @@
 
                         {view === 'report' && (
                             <div className="max-w-5xl mx-auto my-16 p-12 bg-white rounded-3xl shadow-2xl nb-border animate-fade-in-delayed">
-                                <div className="text-center mb-12 pb-8 border-b-4 border-slate-900">
-                                    <div className="w-20 h-20 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-5xl mx-auto mb-6 nb-border"><i className="fa-solid fa-graduation-cap"></i></div>
+                                <div className="text-center mb-12 pb-8">
+                                    <div className="w-20 h-20 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-5xl mx-auto mb-6"><i className="fa-solid fa-graduation-cap"></i></div>
                                     <h2 className="text-5xl font-extrabold mb-3 tracking-tighter text-slate-950 leading-tight">Your Inbox Learning Summary</h2>
                                     <p className="text-2xl text-slate-700 font-semibold">Provided by the Digital Navigator</p>
                                 </div>
@@ -436,7 +434,7 @@
                                         );
                                     })}
                                 </div>
-                                <div className="mt-16 pt-10 border-t-4 border-slate-900 flex flex-col sm:flex-row gap-6">
+                                <div className="mt-16 pt-10 flex flex-col sm:flex-row gap-6">
                                     <button onClick={initializeTest} className="flex-1 bg-slate-900 hover:bg-black text-white py-5 rounded-xl font-extrabold text-2xl nb-button text-center"><i className="fa-solid fa-redo mr-3"></i> Try 10 New Emails</button>
                                     <button onClick={() => setView('hub')} className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-900 py-5 rounded-xl font-extrabold text-2xl nb-button text-center">Return to Learning Toolbox</button>
                                 </div>
