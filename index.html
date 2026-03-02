@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Digital Navigator Learning Toolbox</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        /* Modern, non-threatening aesthetics for Inbox */
+        .gmail-sidebar-item:hover {
+            background-color: #f1f5f9;
+            border-radius: 0 16px 16px 0;
+        }
+
+        /* THE "CLICK FIX": INTERACTIVE ZONES - Only selected are visually distinct */
+        .interact-zone {
+            display: inline-block;
+            /* Essential to group phrases accurately */
+            padding: 2px 4px;
+            /* Expands the clickable area, but not too large to look fake */
+            cursor: pointer;
+            transition: all 0.15s ease-in-out;
+            color: inherit;
+            /* Maintain standard text color initially */
+            border-radius: 4px;
+            font-weight: normal;
+            /* Do not give away by bolding */
+            margin: -1px;
+            /* Align visually on the line */
+        }
+
+        /* Subtly show that an area IS clickable without giving away IF it's a scam */
+        .interact-zone:hover {
+            background-color: rgba(15, 23, 42, 0.05);
+            /* Very faint grey hover */
+            color: #0f172a;
+            /* Darken text slightly on hover */
+        }
+
+        /* The "Selection" - and only AFTER the user has actively decided to click */
+        .interact-zone.selected {
+            background-color: rgba(59, 130, 246, 0.25) !important;
+            border: 3px solid #3b82f6 !important;
+            /* Bold dashed blue border for 2026 clarity */
+            border-style: dashed !important;
+            font-weight: bold;
+            /* Only bold AFTER selection */
+            top: -2px;
+            /* Re-center visually after the bold/border add */
+            position: relative;
+        }
+
+        /* 2026 Design Trends: Softer Neo-Brutalism (Hub/Modal/Report only) */
+        .nb-border {
+            border: 3px solid #0f172a;
+        }
+
+        .nb-shadow-active:active {
+            transform: translate(4px, 4px);
+            box-shadow: none;
+        }
+
+        .nb-button {
+            border: 3px solid #0f172a;
+            box-shadow: 4px 4px 0px #0f172a;
+            transition: all 0.2s ease-in-out;
+        }
+
+        .nb-button:hover {
+            transform: translate(-2px, -2px);
+            box-shadow: 6px 6px 0px #0f172a;
+        }
+
+        .nb-button:active {
+            transform: translate(4px, 4px);
+            box-shadow: none;
+        }
+
+        /* Sustainable Design: Reduced effects, clear typography */
+        .scam-reveal-card {
+            border-left: 10px solid #ef4444;
+            border-top: 3px solid #0f172a;
+            border-right: 3px solid #0f172a;
+            border-bottom: 3px solid #0f172a;
+        }
+
+        .real-reveal-card {
+            border-left: 10px solid #10b981;
+            border-top: 3px solid #0f172a;
+            border-right: 3px solid #0f172a;
+            border-bottom: 3px solid #0f172a;
+        }
+
+        /* Modal Backdrop: Focus over flourish */
+        .modal-backdrop {
+            backdrop-filter: blur(4px);
+            background-color: rgba(15, 23, 42, 0.85);
+        }
+
+        /* Inbox Fidelity */
+        .gm-blue {
+            color: #1a73e8;
+        }
+
+        .gm-box {
+            background: #f8f9fa;
+            border: 1px solid #dadce0;
+        }
+
+        /* Clean fonts are essential for sustainable design */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
+
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+</head>
+
+<body class="bg-slate-50 font-sans text-slate-900">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // --- SCENARIO DATABASE (Updated phrasing and data types) ---
+        const MASTER_POOL = [
+            { id: 1, type: 'scam', sender: "UPS Delivery", email: "delivery@ups-secure-check.biz", subject: "Urgent: Package Delivery Pending", content: "Your package #82910 is held at our warehouse. We need you to confirm your address details **within 24 hours** or the package will be returned.", redFlags: ["ups-secure-check.biz", "within 24 hours"] },
+            { id: 2, type: 'real', sender: "Netflix", email: "info@mailer.netflix.com", subject: "Just Added: See what's new this week", content: "From thrilling dramas to laugh-out-loud comedies, explore the latest titles now streaming on Netflix.", redFlags: [] },
+            { id: 3, type: 'scam', sender: "PayPal Support", email: "service@pay-pal-help.co", subject: "Account Security: Action Required", content: "We noticed a login from a new device in **Vietnam**. Click here to secure your account immediately or your funds may be frozen.", redFlags: ["pay-pal-help.co", "Vietnam"] },
+            { id: 4, type: 'real', sender: "Chase Bank", email: "no.reply.alerts@chase.com", subject: "Your statement is now available", content: "Your monthly credit card statement for the period ending Jan 31 is ready to view in your secure online portal.", redFlags: [] },
+            { id: 5, type: 'scam', sender: "IRS Refund", email: "tax-refunds@irs-gov-online.org", subject: "Pending Tax Refund of $1,200", content: "You have an unclaimed refund waiting for you. Fill out the attached PDF form with your **Social Security Number** to claim it.", redFlags: ["irs-gov-online.org", "Social Security Number"] },
+            { id: 6, type: 'scam', sender: "Microsoft Security", email: "alert@windows-defender.net", subject: "Critical: Trojan Virus Detected!", content: "Your computer has been infected with a dangerous virus. **Call our certified support line** at 1-800-FAKE-HELP immediately for assistance.", redFlags: ["windows-defender.net", "Call our certified support line"] },
+            { id: 7, type: 'real', sender: "LinkedIn", email: "messages-noreply@linkedin.com", subject: "3 people viewed your profile this week", content: "See who's looking at your professional profile and what opportunities are waiting for you.", redFlags: [] },
+            { id: 8, type: 'scam', sender: "Amazon Prime", email: "billing@prime-account-update.biz", subject: "Action Required: Prime Payment Method Declined", content: "Your Amazon Prime subscription will be canceled **within 12 hours**. Please update your payment details on this secure page.", redFlags: ["prime-account-update.biz", "within 12 hours"] },
+            { id: 9, type: 'scam', sender: "Global Recruiters", email: "jobs@hiring-now.us", subject: "Mystery Shopper - Earn **$500/Day**!", content: "Get paid to shop and dine. We will send you a check for $2,000. Keep $500, then use the rest to **buy gift cards** and test store services.", redFlags: ["$500/Day", "buy gift cards"] },
+            { id: 10, type: 'real', sender: "HR Department", email: "hr@company-internal.com", subject: "Annual Benefits Open Enrollment Now Open", content: "It's time to select your health, dental, and vision plans for the upcoming fiscal year. Review the options on the internal employee portal.", redFlags: [] }
+        ];
+
+        // --- Core UI Components ---
+
+        // 1. SECURITY HUB LANDING PAGE
+        const SecurityHub = ({ onStartTest }) => (
+            <div className="min-h-screen p-8 md:p-16 bg-white text-slate-900 animate-fade-in">
+                <header className="flex items-center gap-6 mb-16 pb-8 border-b-4 border-slate-900">
+                    <div className="w-16 h-16 bg-blue-600 rounded-lg flex items-center justify-center text-white text-3xl nb-border">
+                        <i className="fa-solid fa-compass"></i>
+                    </div>
+                    <div>
+                        <h1 className="text-4xl md:text-5xl font-extrabold tracking-tighter text-slate-950">Digital Literacy Toolbox</h1>
+                    </div>
+                </header>
+
+                <main className="max-w-7xl mx-auto">
+                    <section className="text-center mb-20 max-w-3xl mx-auto border-4 border-slate-900 p-10 bg-slate-50 rounded-xl">
+                        <h2 className="text-5xl md:text-6xl font-extrabold mb-6 tracking-tighter text-slate-950 leading-tight">Your Digital Navigator is here to help.</h2>
+                        <p className="text-xl md:text-2xl text-slate-800 leading-relaxed font-medium">Whether you're looking to brush up on your skills or have a specific concern, choose your path below.</p>
+                    </section>
+
+                    <div className="grid md:grid-cols-2 gap-10 mb-20">
+                        {/* Ask a Question Card */}
+                        <a href="https://gemini.google.com/gem/1F5sWHY6-1H1lGT3FxpiGTbKurmODlZNq?usp=sharing" target="_blank" rel="noopener noreferrer" className="group block bg-white nb-border p-10 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 hover:border-blue-600 hover:-translate-y-1">
+                            <div className="flex items-start gap-8">
+                                <div className="w-24 h-24 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-5xl group-hover:bg-blue-200 transition-colors nb-border">
+                                    <i className="fa-solid fa-comments"></i>
+                                </div>
+                                <div className="flex-1">
+                                    <h3 className="text-4xl font-extrabold mb-4 tracking-tight text-slate-950 group-hover:text-blue-700">Ask a Question</h3>
+                                    <p className="text-slate-800 text-xl leading-relaxed mb-8 font-medium">Received a suspicious email or message? Unsure about a digital security topic? Chat with the Digital Navigator now for friendly, instant guidance.</p>
+                                    <span className="text-blue-700 font-bold text-xl flex items-center gap-3">Start Chat <i className="fa-solid fa-arrow-right group-hover:translate-x-2 transition-transform"></i></span>
+                                </div>
+                            </div>
+                        </a>
+
+                        {/* Try Challenge Card */}
+                        <button onClick={onStartTest} className="group block w-full text-left bg-white nb-border p-10 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 hover:border-emerald-600 hover:-translate-y-1">
+                            <div className="flex items-start gap-8">
+                                <div className="w-24 h-24 bg-emerald-100 text-emerald-500 rounded-full flex items-center justify-center text-5xl group-hover:bg-emerald-200 transition-colors nb-border">
+                                    <i className="fa-solid fa-graduation-cap"></i>
+                                </div>
+                                <div className="flex-1">
+                                    <h3 className="text-4xl font-extrabold mb-4 tracking-tight text-slate-950 group-hover:text-emerald-700">Explore the Inbox Navigator</h3>
+                                    <p className="text-slate-800 text-xl leading-relaxed mb-8 font-medium">Test your phishing detection skills with a friendly 10-email inbox challenge. Learn to spot common red flags in a safe, simulated environment.</p>
+                                    <span className="text-emerald-700 font-bold text-xl flex items-center gap-3">Try the Challenge <i className="fa-solid fa-arrow-right group-hover:translate-x-2 transition-transform"></i></span>
+                                </div>
+                            </div>
+                        </button>
+                    </div>
+
+                    <footer className="text-center py-12 border-t-4 border-slate-900 mt-16 text-slate-600 bg-slate-100 p-8 rounded-xl nb-border animate-fade-in-delayed">
+                        <p className="text-lg font-semibold">&copy; 2026 Shaka Clark - DGMD E-57 Section 1 | Block 1 Assignment. All tools are illustrative for educational purposes.</p>
+                    </footer>
+                </main>
+            </div>
+        );
+
+        // 2. MAIN EXPERIENCE CONTROLLER
+        const App = () => {
+            const [view, setView] = useState('hub');
+            const [emails, setEmails] = useState([]);
+            const [selectedEmail, setSelectedEmail] = useState(null);
+            const [userFindings, setUserFindings] = useState({});
+            const [completed, setCompleted] = useState([]);
+            const [showWelcomeModal, setShowWelcomeModal] = useState(false);
+
+            const initializeTest = () => {
+                const shuffled = [...MASTER_POOL].sort(() => 0.5 - Math.random());
+                const picked = shuffled.slice(0, 10);
+                setEmails(picked);
+                setUserFindings({});
+                setCompleted([]);
+                setSelectedEmail(null);
+                setView('inbox');
+                setShowWelcomeModal(true);
+            };
+
+            const toggleFlag = (flagText) => {
+                if (!selectedEmail) return;
+                const current = userFindings[selectedEmail.id] || [];
+                // Allow flagging ANYTHING that looks like an interact-zone, regardless of type
+                setUserFindings({
+                    ...userFindings,
+                    [selectedEmail.id]: current.includes(flagText) ? current.filter(id => id !== flagText) : [...current, flagText]
+                });
+            };
+
+            const markDone = () => {
+                if (!completed.includes(selectedEmail.id)) setCompleted([...completed, selectedEmail.id]);
+                setView('inbox');
+            };
+
+            // FIX RENDERER FUNCTION: Natural presentation, only faint hover/bold select
+            const getNaturalContentArray = () => {
+                if (!selectedEmail) return [];
+                const findings = userFindings[selectedEmail.id] || [];
+                let contentArray = [selectedEmail.content];
+
+                // If SCAM: Loop through the redFlags and split, but render as a single zone
+                if (selectedEmail.type === 'scam') {
+                    selectedEmail.redFlags.forEach(flag => {
+                        if (flag === selectedEmail.email) return; // Handle sender separately
+                        const targetRegex = new RegExp(`(${flag.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')})`, 'g');
+                        let nextArray = [];
+                        contentArray.forEach(segment => {
+                            if (typeof segment === 'string') {
+                                segment.split(targetRegex).forEach(subsegment => {
+                                    nextArray.push(subsegment);
+                                });
+                            } else { nextArray.push(segment); }
+                        });
+                        contentArray = nextArray;
+                    });
+                } else {
+                    // LEGITIMATE: Split on natural word boundaries so they are hoverable but not highlighted
+                    // (Just an example - for true fidelity, this would split on every single word/symbol)
+                    contentArray = selectedEmail.content.split(' ').map(word => word + ' ');
+                }
+
+                return contentArray.map((segment, i) => {
+                    if (typeof segment === 'object') return segment; // Already a react element
+                    // Check if SCAM and is a recognized flag
+                    if (selectedEmail.type === 'scam' && selectedEmail.redFlags.includes(segment)) {
+                        const isSelected = findings.includes(segment);
+                        return <span key={i} onClick={() => toggleFlag(segment)} className={`interact-zone ${isSelected ? 'selected' : ''}`}>{segment}</span>
+                    }
+                    // Legitimate or Scam that isn't a flag: Split into hoverable words without selection feedback
+                    return segment.split(' ').map((subseg, j) => {
+                        if (subseg === ' ') return ' ';
+                        return <span key={`${i}-${j}`} className="interact-zone legit">{subseg}{' '}</span>
+                    });
+                });
+            };
+
+            const finishTest = () => setView('report');
+
+            if (view === 'hub') return <SecurityHub onStartTest={initializeTest} />;
+
+            return (
+                <div className="flex h-screen bg-white text-slate-900">
+
+                    {/* Welcome Modal */}
+                    {showWelcomeModal && (
+                        <div className="fixed inset-0 modal-backdrop z-50 flex items-center justify-center p-6">
+                            <div className="bg-white p-12 rounded-2xl shadow-2xl max-w-2xl w-full nb-border animate-fade-in relative">
+                                <button onClick={() => setShowWelcomeModal(false)} className="absolute top-6 right-6 text-slate-500 hover:text-slate-800 nb-shadow-active">
+                                    <i className="fa-solid fa-xmark text-2xl"></i>
+                                </button>
+                                <div className="flex gap-6 items-center mb-10 pb-6 border-b-4 border-slate-900">
+                                    <div className="w-20 h-20 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center text-4xl nb-border"><i className="fa-solid fa-compass"></i></div>
+                                    <div>
+                                        <h3 className="text-4xl font-extrabold tracking-tight">Welcome to the Inbox Navigator Challenge!</h3>
+                                        <p className="text-xl text-slate-700 font-semibold">From your Digital Navigator</p>
+                                    </div>
+                                </div>
+                                <p className="text-2xl text-slate-900 leading-relaxed mb-12 font-medium">
+                                    I've set up a simulated inbox with 10 emails. Some are safe, and some are tricky scams. Read each email carefully. If you see something that looks like a "red flag," **click on that specific phrase** to flag it. If the email looks perfectly safe, simply click "Finish Review." Good luck!
+                                </p>
+                                <button onClick={() => setShowWelcomeModal(false)} className="w-full bg-blue-600 hover:bg-blue-700 text-white py-5 rounded-xl font-extrabold text-2xl nb-button">Let's Begin</button>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Classic Sidebar */}
+                    <div className="w-72 border-r bg-slate-50/50 p-6 flex flex-col">
+                        <div className="flex items-center gap-3 mb-10 px-2 gm-blue">
+                            <i className="fa-solid fa-compass text-2xl"></i>
+                            <span className="text-xl font-bold tracking-tight">Inbox Navigator</span>
+                        </div>
+                        <button className="bg-blue-100 text-blue-800 p-4 rounded-2xl mb-8 font-semibold shadow-sm">+ Compose</button>
+                        <nav className="flex-1 space-y-1 gm-blue-active">
+                            <div className="flex items-center justify-between p-3 bg-blue-50 text-blue-700 rounded-xl font-bold">
+                                <span><i className="fa-solid fa-inbox mr-3"></i> Inbox</span>
+                                <span className="text-xs bg-blue-200 px-2 py-0.5 rounded-full">{emails.length - completed.length}</span>
+                            </div>
+                            <div className="p-3 text-slate-400 cursor-not-allowed"><i className="fa-regular fa-star mr-3"></i> Starred</div>
+                            <div className="p-3 text-slate-400 cursor-not-allowed"><i className="fa-regular fa-paper-plane mr-3"></i> Sent</div>
+                        </nav>
+                        <button onClick={finishTest} className="mt-auto bg-slate-800 text-white py-3 rounded-lg font-bold hover:bg-black transition-all nb-shadow-active">Finish & Review</button>
+                    </div>
+
+                    {/* Main Content */}
+                    <div className="flex-1 overflow-y-auto">
+                        {view === 'inbox' && (
+                            <div className="p-4 animate-fade-in">
+                                <table className="w-full text-sm">
+                                    <thead className="text-xs text-slate-400 uppercase border-b bg-gray-50/50"><tr><th className="p-4">From</th><th>Subject</th><th className="p-4 text-right">Action</th></tr></thead>
+                                    <tbody>
+                                        {emails.map(e => (
+                                            <tr key={e.id} onClick={() => { setSelectedEmail(e); setView('detail'); }} className={`border-b cursor-pointer transition-colors ${completed.includes(e.id) ? 'bg-slate-50 opacity-50' : 'hover:bg-blue-50 font-semibold'}`}>
+                                                <td className="p-4 w-64 truncate text-slate-800">{e.sender}</td><td className="p-4 text-slate-700">{e.subject}</td><td className="p-4 text-right text-xs text-slate-300">Open <i className="fa-solid fa-chevron-right ml-1"></i></td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
+
+                        {view === 'detail' && selectedEmail && (
+                            <div className="p-12 max-w-4xl mx-auto detail-view animate-fade-in">
+                                <button onClick={() => setView('inbox')} className="text-slate-400 hover:text-blue-600 mb-10 flex items-center gap-2 font-medium"><i className="fa-solid fa-arrow-left"></i> Back to Inbox</button>
+                                <h1 className="text-3xl font-medium mb-3 text-slate-900">{selectedEmail.subject}</h1>
+                                <div className="flex items-center gap-4 mb-10 pb-6 border-b">
+                                    <div className="w-11 h-11 bg-slate-200 rounded-full flex items-center justify-center font-bold text-slate-500 text-lg gm-border">{selectedEmail.sender[0]}</div>
+                                    <div className="flex-1">
+                                        <div className="font-semibold text-slate-800">{selectedEmail.sender}
+                                            {/* SENDER ADDRESS FIX: Natural text, subtle hover, bold only when SCAM and selected */}
+                                            {selectedEmail.type === 'scam' && selectedEmail.redFlags.includes(selectedEmail.email) ? (
+                                                <span onClick={() => toggleFlag(selectedEmail.email)} className={`ml-2 interact-zone scam ${(userFindings[selectedEmail.id] || []).includes(selectedEmail.email) ? 'selected' : ''}`}>
+                                                    &lt;{selectedEmail.email}&gt;
+                                                </span>
+                                            ) : (
+                                                <span className="font-normal text-slate-400">&lt;{selectedEmail.email}&gt;</span>
+                                            )}
+                                        </div>
+                                        <div className="text-sm text-slate-400">to me</div>
+                                    </div>
+                                </div>
+                                <div className="bg-white p-10 rounded-2xl gm-box min-h-[300px] text-lg leading-relaxed text-slate-700 shadow-inner mb-10 gm-border">
+                                    {/* NATURAL RENDER FIX: Reverted to getNaturalContentArray() to remove pre-highlighting */}
+                                    {getNaturalContentArray()}
+                                </div>
+                                <div className="flex justify-between items-center bg-blue-50 p-6 rounded-2xl border border-blue-100 gm-border">
+                                    <p className="text-sm text-blue-800 pr-8">
+                                        <strong>How to Review:</strong> Read carefully. If anything looks like a red flag (including the sender's address), click on that phrase to flag it. If it looks perfectly safe, click "Finish Review."
+                                    </p>
+                                    <button onClick={markDone} className="bg-blue-600 text-white px-10 py-3.5 rounded-xl font-bold whitespace-nowrap shadow hover:bg-blue-700 transition-colors nb-shadow-active">Finish Review</button>
+                                </div>
+                            </div>
+                        )}
+
+                        {view === 'report' && (
+                            <div className="max-w-5xl mx-auto my-16 p-12 bg-white rounded-3xl shadow-2xl nb-border animate-fade-in-delayed">
+                                <div className="text-center mb-12 pb-8 border-b-4 border-slate-900">
+                                    <div className="w-20 h-20 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-5xl mx-auto mb-6 nb-border"><i className="fa-solid fa-graduation-cap"></i></div>
+                                    <h2 className="text-5xl font-extrabold mb-3 tracking-tighter text-slate-950 leading-tight">Your Inbox Learning Summary</h2>
+                                    <p className="text-2xl text-slate-700 font-semibold">Provided by the Digital Navigator</p>
+                                </div>
+                                <div className="space-y-8">
+                                    {emails.map(e => {
+                                        const foundFlags = userFindings[e.id] || [];
+                                        const isScam = e.type === 'scam';
+                                        return (
+                                            <div key={e.id} className={`p-8 rounded-2xl ${isScam ? 'scam-reveal-card bg-red-50' : 'real-reveal-card bg-emerald-50'}`}>
+                                                <div className="flex justify-between items-start mb-4 pb-4 border-b-2 border-slate-900/10">
+                                                    <h4 className="font-extrabold text-2xl tracking-tight text-slate-950">{e.subject}</h4>
+                                                    <span className={`px-4 py-1.5 rounded-full text-sm font-bold uppercase tracking-wider nb-border ${isScam ? 'bg-red-200 text-red-900' : 'bg-emerald-200 text-emerald-900'}`}>{isScam ? 'Scam Email' : 'Safe Email'}</span>
+                                                </div>
+                                                <p className="text-lg text-slate-700 mb-6 italic font-medium">Sent by: {e.email}</p>
+                                                {isScam ? (
+                                                    <div className="text-lg">
+                                                        <p className="font-bold text-red-800 mb-3">Common tactics in this email:</p>
+                                                        <ul className="list-disc ml-6 space-y-2 text-slate-800 font-medium">
+                                                            {e.redFlags.map((rf, i) => <li key={i}>Notice the use of "<strong>{rf}</strong>" to trick users.</li>)}
+                                                        </ul>
+                                                        <p className="mt-6 font-semibold text-slate-950 bg-white p-4 rounded-lg nb-border inline-block">{foundFlags.length > 0 ? "✅ Great job identifying those red flags!" : "💡 Watch out for these signs in the future."}</p>
+                                                    </div>
+                                                ) : (<p className="text-lg text-emerald-900 font-medium">This email was a legitimate notification. Notice the lack of private data requests or urgent threats.</p>)}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                                <div className="mt-16 pt-10 border-t-4 border-slate-900 flex flex-col sm:flex-row gap-6">
+                                    <button onClick={initializeTest} className="flex-1 bg-slate-900 hover:bg-black text-white py-5 rounded-xl font-extrabold text-2xl nb-button text-center"><i className="fa-solid fa-redo mr-3"></i> Try 10 New Emails</button>
+                                    <button onClick={() => setView('hub')} className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-900 py-5 rounded-xl font-extrabold text-2xl nb-button text-center">Return to Learning Toolbox</button>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+
+</html>
