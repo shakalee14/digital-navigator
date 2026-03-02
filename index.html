@@ -129,17 +129,39 @@
 
         // --- SCENARIO DATABASE (Updated phrasing and data types) ---
         const MASTER_POOL = [
-            { id: 1, type: 'scam', sender: "UPS Delivery", email: "delivery@ups-secure-check.biz", subject: "Urgent: Package Delivery Pending", content: "Your package #82910 is held at our warehouse. We need you to confirm your address details **within 24 hours** or the package will be returned.", redFlags: ["ups-secure-check.biz", "within 24 hours"] },
+            { id: 1, type: 'scam', sender: "UPS Delivery", email: "delivery@ups-secure-check.biz", subject: "Urgent: Package Delivery Pending", content: "Your package #82910 is held at our warehouse. We need you to confirm your address details within 24 hours or the package will be returned.", redFlags: ["ups-secure-check.biz", "within 24 hours"] },
             { id: 2, type: 'real', sender: "Netflix", email: "info@mailer.netflix.com", subject: "Just Added: See what's new this week", content: "From thrilling dramas to laugh-out-loud comedies, explore the latest titles now streaming on Netflix.", redFlags: [] },
-            { id: 3, type: 'scam', sender: "PayPal Support", email: "service@pay-pal-help.co", subject: "Account Security: Action Required", content: "We noticed a login from a new device in **Vietnam**. Click here to secure your account immediately or your funds may be frozen.", redFlags: ["pay-pal-help.co", "Vietnam"] },
+            { id: 3, type: 'scam', sender: "PayPal Support", email: "service@pay-pal-help.co", subject: "Account Security: Action Required", content: "We noticed a login from a new device in Vietnam. Click here to secure your account immediately or your funds may be frozen.", redFlags: ["pay-pal-help.co", "Vietnam"] },
             { id: 4, type: 'real', sender: "Chase Bank", email: "no.reply.alerts@chase.com", subject: "Your statement is now available", content: "Your monthly credit card statement for the period ending Jan 31 is ready to view in your secure online portal.", redFlags: [] },
-            { id: 5, type: 'scam', sender: "IRS Refund", email: "tax-refunds@irs-gov-online.org", subject: "Pending Tax Refund of $1,200", content: "You have an unclaimed refund waiting for you. Fill out the attached PDF form with your **Social Security Number** to claim it.", redFlags: ["irs-gov-online.org", "Social Security Number"] },
-            { id: 6, type: 'scam', sender: "Microsoft Security", email: "alert@windows-defender.net", subject: "Critical: Trojan Virus Detected!", content: "Your computer has been infected with a dangerous virus. **Call our certified support line** at 1-800-FAKE-HELP immediately for assistance.", redFlags: ["windows-defender.net", "Call our certified support line"] },
+            { id: 5, type: 'scam', sender: "IRS Refund", email: "tax-refunds@irs-gov-online.org", subject: "Pending Tax Refund of $1,200", content: "You have an unclaimed refund waiting for you. Fill out the attached PDF form with your Social Security Number to claim it.", redFlags: ["irs-gov-online.org", "Social Security Number"] },
+            { id: 6, type: 'scam', sender: "Microsoft Security", email: "alert@windows-defender.net", subject: "Critical: Trojan Virus Detected!", content: "Your computer has been infected with a dangerous virus. Call our certified support line at 1-800-FAKE-HELP immediately for assistance.", redFlags: ["windows-defender.net", "Call our certified support line"] },
             { id: 7, type: 'real', sender: "LinkedIn", email: "messages-noreply@linkedin.com", subject: "3 people viewed your profile this week", content: "See who's looking at your professional profile and what opportunities are waiting for you.", redFlags: [] },
-            { id: 8, type: 'scam', sender: "Amazon Prime", email: "billing@prime-account-update.biz", subject: "Action Required: Prime Payment Method Declined", content: "Your Amazon Prime subscription will be canceled **within 12 hours**. Please update your payment details on this secure page.", redFlags: ["prime-account-update.biz", "within 12 hours"] },
-            { id: 9, type: 'scam', sender: "Global Recruiters", email: "jobs@hiring-now.us", subject: "Mystery Shopper - Earn **$500/Day**!", content: "Get paid to shop and dine. We will send you a check for $2,000. Keep $500, then use the rest to **buy gift cards** and test store services.", redFlags: ["$500/Day", "buy gift cards"] },
+            { id: 8, type: 'scam', sender: "Amazon Prime", email: "billing@prime-account-update.biz", subject: "Action Required: Prime Payment Method Declined", content: "Your Amazon Prime subscription will be canceled within 12 hours. Please update your payment details on this secure page.", redFlags: ["prime-account-update.biz", "within 12 hours"] },
+            { id: 9, type: 'scam', sender: "Global Recruiters", email: "jobs@hiring-now.us", subject: "Mystery Shopper - Earn $500/Day!", content: "Get paid to shop and dine. We will send you a check for $2,000. Keep $500, then use the rest to buy gift cards and test store services.", redFlags: ["$500/Day", "buy gift cards"] },
             { id: 10, type: 'real', sender: "HR Department", email: "hr@company-internal.com", subject: "Annual Benefits Open Enrollment Now Open", content: "It's time to select your health, dental, and vision plans for the upcoming fiscal year. Review the options on the internal employee portal.", redFlags: [] }
         ];
+
+        // Lightweight inline markdown renderer for seeded copy.
+        // Supports **bold**, __bold__, *italic*, _italic_, and nested forms.
+        const renderInlineMarkdown = (text, keyPrefix = 'md') => {
+            if (typeof text !== 'string') return text;
+            const tokenRegex = /(\*\*[^*]+\*\*|__[^_]+__|\*[^*]+\*|_[^_]+_)/g;
+            const parts = text.split(tokenRegex);
+
+            return parts.map((part, index) => {
+                const key = `${keyPrefix}-${index}`;
+                if (!part) return null;
+                if ((part.startsWith('**') && part.endsWith('**')) || (part.startsWith('__') && part.endsWith('__'))) {
+                    const inner = part.slice(2, -2);
+                    return <strong key={key}>{renderInlineMarkdown(inner, `${key}-strong`)}</strong>;
+                }
+                if ((part.startsWith('*') && part.endsWith('*')) || (part.startsWith('_') && part.endsWith('_'))) {
+                    const inner = part.slice(1, -1);
+                    return <em key={key}>{renderInlineMarkdown(inner, `${key}-em`)}</em>;
+                }
+                return <React.Fragment key={key}>{part}</React.Fragment>;
+            });
+        };
 
         // --- Core UI Components ---
 
@@ -265,12 +287,12 @@
                     // Check if SCAM and is a recognized flag
                     if (selectedEmail.type === 'scam' && selectedEmail.redFlags.includes(segment)) {
                         const isSelected = findings.includes(segment);
-                        return <span key={i} onClick={() => toggleFlag(segment)} className={`interact-zone ${isSelected ? 'selected' : ''}`}>{segment}</span>
+                        return <span key={i} onClick={() => toggleFlag(segment)} className={`interact-zone ${isSelected ? 'selected' : ''}`}>{renderInlineMarkdown(segment, `flag-${i}`)}</span>
                     }
                     // Legitimate or Scam that isn't a flag: Split into hoverable words without selection feedback
                     return segment.split(' ').map((subseg, j) => {
                         if (subseg === ' ') return ' ';
-                        return <span key={`${i}-${j}`} className="interact-zone legit">{subseg}{' '}</span>
+                        return <span key={`${i}-${j}`} className="interact-zone legit">{renderInlineMarkdown(subseg, `seg-${i}-${j}`)}{' '}</span>
                     });
                 });
             };
@@ -297,7 +319,7 @@
                                     </div>
                                 </div>
                                 <p className="text-2xl text-slate-900 leading-relaxed mb-12 font-medium">
-                                    I've set up a simulated inbox with 10 emails. Some are safe, and some are tricky scams. Read each email carefully. If you see something that looks like a "red flag," **click on that specific phrase** to flag it. If the email looks perfectly safe, simply click "Finish Review." Good luck!
+                                    I've set up a simulated inbox with 10 emails. Some are safe, and some are tricky scams. Read each email carefully. If you see something that looks like a "red flag," <strong>click on that specific phrase</strong> to flag it. If the email looks perfectly safe, simply click "Finish Review." Good luck!
                                 </p>
                                 <button onClick={() => setShowWelcomeModal(false)} className="w-full bg-blue-600 hover:bg-blue-700 text-white py-5 rounded-xl font-extrabold text-2xl nb-button">Let's Begin</button>
                             </div>
@@ -331,7 +353,7 @@
                                     <tbody>
                                         {emails.map(e => (
                                             <tr key={e.id} onClick={() => { setSelectedEmail(e); setView('detail'); }} className={`border-b cursor-pointer transition-colors ${completed.includes(e.id) ? 'bg-slate-50 opacity-50' : 'hover:bg-blue-50 font-semibold'}`}>
-                                                <td className="p-4 w-64 truncate text-slate-800">{e.sender}</td><td className="p-4 text-slate-700">{e.subject}</td><td className="p-4 text-right text-xs text-slate-300">Open <i className="fa-solid fa-chevron-right ml-1"></i></td>
+                                                <td className="p-4 w-64 truncate text-slate-800">{e.sender}</td><td className="p-4 text-slate-700">{renderInlineMarkdown(e.subject, `inbox-subject-${e.id}`)}</td><td className="p-4 text-right text-xs text-slate-300">Open <i className="fa-solid fa-chevron-right ml-1"></i></td>
                                             </tr>
                                         ))}
                                     </tbody>
@@ -342,7 +364,7 @@
                         {view === 'detail' && selectedEmail && (
                             <div className="p-12 max-w-4xl mx-auto detail-view animate-fade-in">
                                 <button onClick={() => setView('inbox')} className="text-slate-400 hover:text-blue-600 mb-10 flex items-center gap-2 font-medium"><i className="fa-solid fa-arrow-left"></i> Back to Inbox</button>
-                                <h1 className="text-3xl font-medium mb-3 text-slate-900">{selectedEmail.subject}</h1>
+                                <h1 className="text-3xl font-medium mb-3 text-slate-900">{renderInlineMarkdown(selectedEmail.subject, `detail-subject-${selectedEmail.id}`)}</h1>
                                 <div className="flex items-center gap-4 mb-10 pb-6 border-b">
                                     <div className="w-11 h-11 bg-slate-200 rounded-full flex items-center justify-center font-bold text-slate-500 text-lg gm-border">{selectedEmail.sender[0]}</div>
                                     <div className="flex-1">
@@ -386,7 +408,7 @@
                                         return (
                                             <div key={e.id} className={`p-8 rounded-2xl ${isScam ? 'scam-reveal-card bg-red-50' : 'real-reveal-card bg-emerald-50'}`}>
                                                 <div className="flex justify-between items-start mb-4 pb-4 border-b-2 border-slate-900/10">
-                                                    <h4 className="font-extrabold text-2xl tracking-tight text-slate-950">{e.subject}</h4>
+                                                    <h4 className="font-extrabold text-2xl tracking-tight text-slate-950">{renderInlineMarkdown(e.subject, `report-subject-${e.id}`)}</h4>
                                                     <span className={`px-4 py-1.5 rounded-full text-sm font-bold uppercase tracking-wider nb-border ${isScam ? 'bg-red-200 text-red-900' : 'bg-emerald-200 text-emerald-900'}`}>{isScam ? 'Scam Email' : 'Safe Email'}</span>
                                                 </div>
                                                 <p className="text-lg text-slate-700 mb-6 italic font-medium">Sent by: {e.email}</p>
